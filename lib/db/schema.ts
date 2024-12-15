@@ -61,10 +61,23 @@ export const invitations = pgTable('invitations', {
   status: varchar('status', { length: 20 }).notNull().default('pending'),
 });
 
+export const constructionObjects = pgTable('construction_objects', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  address: text('address').notNull(),
+  status: varchar('status', { length: 50 }).notNull().default('active'),
+  teamId: integer('team_id')
+    .notNull()
+    .references(() => teams.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
 export const teamsRelations = relations(teams, ({ many }) => ({
   teamMembers: many(teamMembers),
   activityLogs: many(activityLogs),
   invitations: many(invitations),
+  constructionObjects: many(constructionObjects),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -105,6 +118,13 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   }),
 }));
 
+export const constructionObjectsRelations = relations(constructionObjects, ({ one }) => ({
+  team: one(teams, {
+    fields: [constructionObjects.teamId],
+    references: [teams.id],
+  }),
+}));
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Team = typeof teams.$inferSelect;
@@ -120,6 +140,8 @@ export type TeamDataWithMembers = Team & {
     user: Pick<User, 'id' | 'name' | 'email'>;
   })[];
 };
+export type ConstructionObject = typeof constructionObjects.$inferSelect;
+export type NewConstructionObject = typeof constructionObjects.$inferInsert;
 
 export enum ActivityType {
   SIGN_UP = 'SIGN_UP',
@@ -132,4 +154,7 @@ export enum ActivityType {
   REMOVE_TEAM_MEMBER = 'REMOVE_TEAM_MEMBER',
   INVITE_TEAM_MEMBER = 'INVITE_TEAM_MEMBER',
   ACCEPT_INVITATION = 'ACCEPT_INVITATION',
+  CREATE_CONSTRUCTION_OBJECT = 'CREATE_CONSTRUCTION_OBJECT',
+  UPDATE_CONSTRUCTION_OBJECT = 'UPDATE_CONSTRUCTION_OBJECT',
+  DELETE_CONSTRUCTION_OBJECT = 'DELETE_CONSTRUCTION_OBJECT',
 }
